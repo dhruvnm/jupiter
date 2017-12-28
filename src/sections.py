@@ -2,7 +2,8 @@ from datetime import time
 from re import findall
 
 class Section:
-    def __init___(self, section_id, instructors):
+
+    def __init__(self, section_id, instructors):
         self.meetings = list()
         self.section_id = section_id
         self.instructors = instructors
@@ -20,19 +21,20 @@ class Section:
         return False
 
 class Meeting:
+
     def __init__(self, days, start_time, end_time):
         self.days = days
 
         # The following code parses a string like 12:30pm and saves it as a time object
         t = start_time.split(':')
-        if start_time[-2:] is 'am':
-            self.start_time = time(int(t[0]), int(t[1][:-2])))
+        if start_time[-2:] == 'am' or start_time[:2] == '12':
+            self.start_time = time(int(t[0]), int(t[1][:-2]))
         else:
             self.start_time = time(int(t[0]) + 12, int(t[1][:-2]))
 
         t = end_time.split(':')
-        if end_time[-2:] is 'am':
-            self.end_time = time(int(t[0]), int(t[1][:-2])))
+        if end_time[-2:] == 'am' or end_time[:2] == '12':
+            self.end_time = time(int(t[0]), int(t[1][:-2]))
         else:
             self.end_time = time(int(t[0]) + 12, int(t[1][:-2]))
 
@@ -49,10 +51,10 @@ class Meeting:
 
         # if there is a day conlict, check the times
         if day_conflict is True:
-            if (other.start_time >= self.start_time and
+            if ((other.start_time >= self.start_time and
                other.start_time <= self.end_time) or
                (other.end_time >= self.start_time and
-               other.end_time <= self.end_time):
+               other.end_time <= self.end_time)):
                 return True
 
         return False

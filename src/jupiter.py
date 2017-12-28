@@ -9,14 +9,20 @@ from itertools import product
 app = Flask(__name__)
 url = 'http://api.umd.io/v0/courses/'
 
-@app.route('/', methods=['GET', 'POST'])
-def home():
-    if request.method == 'GET':
-        return render_template('submit.html')
-    else:
+@app.route('/', methods = ['GET'])
+def submit():
+    return render_template('submit.html')
+
+@app.route('/result/', methods = ['GET', 'POST'])
+def result():
+    if request.method == 'POST':
         result = request.form
         get_classes(result['classes'])
-        return result['classes']
+        with open('schedules.txt', 'r') as f:
+            content = f.read()
+        return render_template('result.html', content=content)
+    else:
+        return render_template('result.html', content='You haven\'t entered any classes!')
 
 def get_classes(classes):
     classes = classes.split(',')
@@ -24,7 +30,8 @@ def get_classes(classes):
     for c in classes:
         c = c.strip()
         c = c.lower()
-        mod.append(c)
+        if len(c) > 0 and c not in mod:
+            mod.append(c)
 
     class_json = list()
 
@@ -36,14 +43,31 @@ def get_classes(classes):
             continue
 
         class_info = load(result)
+        if isinstance(class_info, list) is False:
+            class_info = [class_info]
         class_json.append(class_info)
 
     class_json.sort(key=len)
-    make_schedules(class_json)
+    schedules = make_schedules(class_json)
+    write_schedules(schedules)
+
+def write_schedules(schedules):
+    with open('schedules.txt', 'w') as f:
+        i = 1
+        for schedule in schedules:
+            f.write(''.join(['Schedule #', str(i), '\n']))
+            for cl in schedule:
+                f.write(''.join([cl.section_id, '\n']))
+                for meeting in cl.meetings:
+                    f.write(' '.join([meeting.days,
+                        meeting.start_time.strftime('%I:%M%p'), '-',
+                        meeting.end_time.strftime('%I:%M%p'), '\n']))
+            i = i + 1
+            f.write('\n')
 
 def make_schedules(classes):
     # No schedules possible if there are no classes
-    if len(classes) is 0:
+    if len(classes) == 0:
         return None
 
     schedules = convert(classes[0])
@@ -53,14 +77,14 @@ def make_schedules(classes):
         new_list = convert(classes[i]) # next classes sections
         # cartesian product of current schedules with new sections to get all
         # new possible sections
-        schedules = product(schedules, new_list)
+        schedules = list(product(schedules, new_list))
         conflicts = list()
         j = 0
         # iterate over all schedules to detect conflicts
         while j < len(schedules):
             for section in schedules[j][0]: # iterates over all old classes in schedule
                 # checks to see if new section is a conflict
-                if schedules[j][1].is_conflict(section) is True:
+                if schedules[j][1][0].is_conflict(section) is True:
                     conflicts.append(j)
                     break
             j = j + 1
@@ -76,6 +100,8 @@ def make_schedules(classes):
             new_schedules.append(tuple([section for tupl in elt for section in tupl]))
         schedules = new_schedules
         i = i + 1
+
+    return schedules
 
 # Converts a list of sections into a list of section objects in a tuple
 def convert(sections):
