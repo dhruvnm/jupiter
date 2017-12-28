@@ -57,7 +57,11 @@ def write_schedules(schedules):
         for schedule in schedules:
             f.write(''.join(['Schedule #', str(i), '\n']))
             for cl in schedule:
-                f.write(''.join([cl.section_id, '\n']))
+                l = [cl.section_id]
+                for instructor in cl.instructors:
+                    l.append(instructor)
+                l.append('\n')
+                f.write(' '.join(l))
                 for meeting in cl.meetings:
                     f.write(' '.join([meeting.days,
                         meeting.start_time.strftime('%I:%M%p'), '-',
