@@ -16,8 +16,9 @@ def submit():
 @app.route('/result/', methods = ['GET', 'POST'])
 def result():
     if request.method == 'POST':
-        result = request.form
-        get_classes(result['classes'])
+        result = request.form.getlist('classes[]')
+        print(result)
+        get_classes(result)
         with open('schedules.txt', 'r') as f:
             content = f.read()
         return render_template('result.html', content=content)
@@ -25,7 +26,6 @@ def result():
         return render_template('result.html', content='You haven\'t entered any classes!')
 
 def get_classes(classes):
-    classes = classes.split(',')
     mod = list()
     for c in classes:
         c = c.strip()
@@ -54,6 +54,10 @@ def get_classes(classes):
 def write_schedules(schedules):
     with open('schedules.txt', 'w') as f:
         i = 1
+        if schedules == None:
+            f.write('You haven\'t entered any classes!')
+            return
+        
         for schedule in schedules:
             f.write(''.join(['Schedule #', str(i), '\n']))
             for cl in schedule:
