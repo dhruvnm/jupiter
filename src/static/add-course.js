@@ -1,17 +1,28 @@
-counter = 1;
+courseCounter = 1;
 
-function addCourse(divName) {
-  counter++;
+function addDiv(divName, option) {
   var parentDiv = document.getElementById(divName);
   var newDiv = document.createElement('div');
-  newDiv.setAttribute("id", "course" + counter);
-  newDiv.innerHTML = "Course #" + counter + "<br><input type='text' name='classes[]'>";
+  addOptions(newDiv, option);
   parentDiv.appendChild(newDiv);
 }
 
-function removeCourse(divName) {
-  divName += counter;
+function removeDiv(divName, option) {
+  divName = removeOptions(divName, option);
   var element = document.getElementById(divName);
   element.parentNode.removeChild(element);
-  counter--;
+}
+
+function addOptions(div, option) {
+  if (option == 'course') {
+    courseCounter++;
+    div.setAttribute("id", "course" + courseCounter);
+    div.innerHTML = "Course #" + courseCounter + "<br><input type='text' name='classes[]'>";
+  }
+}
+
+function removeOptions(divName, option) {
+  if (option == 'course') {
+    return divName + courseCounter--;
+  }
 }
