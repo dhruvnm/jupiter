@@ -16,16 +16,15 @@ def submit():
 @app.route('/result/', methods = ['GET', 'POST'])
 def result():
     if request.method == 'POST':
-        result = request.form.getlist('classes[]')
-        print(result)
-        get_classes(result)
+        get_classes(request)
         with open('schedules.txt', 'r') as f:
             content = f.read()
         return render_template('result.html', content=content)
     else:
         return render_template('result.html', content='You haven\'t entered any classes!')
 
-def get_classes(classes):
+def get_classes(request):
+    classes = request.form.getlist('classes[]')
     mod = list()
     for c in classes:
         c = c.strip()
@@ -47,9 +46,22 @@ def get_classes(classes):
             class_info = [class_info]
         class_json.append(class_info)
 
+    class_json = apply_filters(class_json, request)
     class_json.sort(key=len)
     schedules = make_schedules(class_json)
     write_schedules(schedules)
+
+def apply_filters(classes, request):
+    i = 1;
+    mod = list()
+    for cl in classes:
+        inc = request.form.getlist(''.join(['course', str(i), '-inc[]']))
+        sori = request.form.getlist(''.join['course', str(i), '-sori[]'])
+        vals = request.form.getlist(''.join(['course', str(i), '-vals[]']))
+        #insert code to apply filters
+
+
+
 
 def write_schedules(schedules):
     with open('schedules.txt', 'w') as f:
@@ -57,7 +69,7 @@ def write_schedules(schedules):
         if schedules == None:
             f.write('You haven\'t entered any classes!')
             return
-        
+
         for schedule in schedules:
             f.write(''.join(['Schedule #', str(i), '\n']))
             for cl in schedule:

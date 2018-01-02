@@ -1,28 +1,43 @@
 courseCounter = 1;
+optionIdCounter = 1;
 
-function addDiv(divName, option) {
+
+function addCourse(divName) {
   var parentDiv = document.getElementById(divName);
   var newDiv = document.createElement('div');
-  addOptions(newDiv, option);
+  courseCounter++;
+  newDiv.setAttribute("id", "course" + courseCounter);
+  newDiv.innerHTML = "Course #" + courseCounter + "<br><input type=\"text\" name=\"classes[]\">\n"
+                   + "<input type=\"button\" value=\"add option\" onclick=\"addOption('course" + courseCounter + "')\">";
   parentDiv.appendChild(newDiv);
 }
 
-function removeDiv(divName, option) {
-  divName = removeOptions(divName, option);
-  var element = document.getElementById(divName);
+function removeCourse() {
+  var element = document.getElementById('course' + courseCounter);
+  courseCounter--;
   element.parentNode.removeChild(element);
 }
 
-function addOptions(div, option) {
-  if (option == 'course') {
-    courseCounter++;
-    div.setAttribute("id", "course" + courseCounter);
-    div.innerHTML = "Course #" + courseCounter + "<br><input type='text' name='classes[]'>";
-  }
+function addOption(divName) {
+  var parentDiv = document.getElementById(divName);
+  var newDiv = document.createElement('div');
+  newDiv.setAttribute("id", "option" + optionIdCounter);
+
+  newDiv.innerHTML = "<select name='" + divName + "-inc[]'>"
+                     + "<option value='include'>Include</option>"
+                     + "<option value='d_include'>Don't include</option>"
+                     + "</select>"
+                     + "<select name='" + divName + "-sori[]'>"
+                     + "<option value='section'>Section</option>"
+                     + "<option value='instructor'>Instructor</option>"
+                     + "</section>"
+                     + "<input type='text' name='" + divName + "-vals[]'>"
+                     + "<input type='button' value='remove' onclick=\"removeOption('option" + optionIdCounter +"')\">";
+  optionIdCounter++;
+  parentDiv.appendChild(newDiv);
 }
 
-function removeOptions(divName, option) {
-  if (option == 'course') {
-    return divName + courseCounter--;
-  }
+function removeOption(divName) {
+  var element = document.getElementById(divName);
+  element.parentNode.removeChild(element);
 }
