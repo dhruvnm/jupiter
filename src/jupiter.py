@@ -1,5 +1,4 @@
 from json import load
-from pprint import pprint
 from urllib.request import urlopen
 from urllib.error import HTTPError
 from flask import Flask, render_template, request
@@ -74,6 +73,7 @@ def apply_filters(classes, request):
                 if typ == 'section':
                     actual = section['section_id'].lower()
                     check = val.lower()
+                    check = check.strip()
                     if check in actual:
                         good_secs.append(section)
                         break
@@ -82,6 +82,7 @@ def apply_filters(classes, request):
                     for instructor in section['instructors']:
                         actual = instructor.lower()
                         check = val.lower()
+                        check = check.strip()
                         if check in actual:
                             good_secs.append(section)
                             found = True
@@ -101,6 +102,7 @@ def apply_filters(classes, request):
                 if typ == 'section':
                     actual = section['section_id'].lower()
                     check = val.lower()
+                    check = check.strip()
                     if check in actual:
                         to_remove.append(j)
                         break
@@ -109,6 +111,7 @@ def apply_filters(classes, request):
                     for instructor in section['instructors']:
                         actual = instructor.lower()
                         check = val.lower()
+                        check = check.strip()
                         if check in actual:
                             to_remove.append(j)
                             found = True
