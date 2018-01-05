@@ -9,10 +9,11 @@
       <div id="courseSelection">
         <div id="course1">
           Course #1<br><input type="text" name="classes[]">
+          <input type="button" value="add option" onclick="addOption('course1')">
         </div>
       </div>
       <input type="button" value="add course" onclick="addCourse('courseSelection')">
-      <input type="button" value="remove course" onclick="removeCourse('course')">
+      <input type="button" value="remove course" onclick="removeCourse()">
       <br>
       <input type="submit" value="submit">
     </form>

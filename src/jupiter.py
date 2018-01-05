@@ -16,16 +16,15 @@ def submit():
 @app.route('/result/', methods = ['GET', 'POST'])
 def result():
     if request.method == 'POST':
-        result = request.form.getlist('classes[]')
-        print(result)
-        get_classes(result)
+        get_classes(request)
         with open('schedules.txt', 'r') as f:
             content = f.read()
         return render_template('result.html', content=content)
     else:
         return render_template('result.html', content='You haven\'t entered any classes!')
 
-def get_classes(classes):
+def get_classes(request):
+    classes = request.form.getlist('classes[]')
     mod = list()
     for c in classes:
         c = c.strip()
@@ -47,17 +46,91 @@ def get_classes(classes):
             class_info = [class_info]
         class_json.append(class_info)
 
+    class_json = apply_filters(class_json, request)
     class_json.sort(key=len)
     schedules = make_schedules(class_json)
     write_schedules(schedules)
 
+def apply_filters(classes, request):
+    i = 1
+    mod = list()
+    for cl in classes:
+        inc = request.form.getlist(''.join(['course', str(i), '-inc[]']))
+        sori = request.form.getlist(''.join(['course', str(i), '-sori[]']))
+        vals = request.form.getlist(''.join(['course', str(i), '-vals[]']))
+        to_include = list()
+        d_include = list()
+        #Split into lists of things to include and things not to include
+        for x, y, z in zip(inc, sori, vals):
+            if x == 'include':
+                to_include.append((y, z,))
+            else:
+                d_include.append((y, z,))
+
+        good_secs = list()
+        #determine which sections abide by the include rules
+        for section in cl:
+            for typ, val in to_include:
+                if typ == 'section':
+                    actual = section['section_id'].lower()
+                    check = val.lower()
+                    if check in actual:
+                        good_secs.append(section)
+                        break
+                else:
+                    found = False
+                    for instructor in section['instructors']:
+                        actual = instructor.lower()
+                        check = val.lower()
+                        if check in actual:
+                            good_secs.append(section)
+                            found = True
+                            break
+                    if found:
+                        break
+
+        if len(good_secs) == 0:
+            good_secs = cl
+
+        #remove any sections that should not be included
+        j = -1
+        to_remove = list()
+        for section in good_secs:
+            j = j + 1
+            for typ, val in d_include:
+                if typ == 'section':
+                    actual = section['section_id'].lower()
+                    check = val.lower()
+                    if check in actual:
+                        to_remove.append(j)
+                        break
+                else:
+                    found = False
+                    for instructor in section['instructors']:
+                        actual = instructor.lower()
+                        check = val.lower()
+                        if check in actual:
+                            to_remove.append(j)
+                            found = True
+                    if found:
+                        break
+
+        to_remove = list(reversed(to_remove))
+        for idx in to_remove:
+            good_secs.pop(idx)
+
+        mod.append(good_secs)
+        i = i + 1
+
+    return mod
+
 def write_schedules(schedules):
     with open('schedules.txt', 'w') as f:
         i = 1
-        if schedules == None:
-            f.write('You haven\'t entered any classes!')
+        if schedules == None or len(schedules) == 0:
+            f.write('No possible schedules!')
             return
-        
+
         for schedule in schedules:
             f.write(''.join(['Schedule #', str(i), '\n']))
             for cl in schedule:
