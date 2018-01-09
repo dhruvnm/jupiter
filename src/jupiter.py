@@ -15,12 +15,12 @@ def submit():
 @app.route('/result/', methods = ['GET', 'POST'])
 def result():
     if request.method == 'POST':
-        get_classes(request)
-        with open('schedules.txt', 'r') as f:
-            content = f.read()
-        return render_template('result.html', content=content)
+        schedules = get_classes(request)
+        n = ''.join(['There are <b>', str(len(schedules)), '</b> schedules possible'])
+        written = write_schedules(schedules)
+        return render_template('result.html', n=n, schedules=written)
     else:
-        return render_template('result.html', content='You haven\'t entered any classes!')
+        return render_template('result.html', n='', schedules=['You haven\'t entered any classes!'])
 
 def get_classes(request):
     classes = request.form.getlist('classes[]')
@@ -48,7 +48,7 @@ def get_classes(request):
     class_json = apply_filters(class_json, request)
     class_json.sort(key=len)
     schedules = make_schedules(class_json)
-    write_schedules(schedules)
+    return schedules
 
 def apply_filters(classes, request):
     i = 1
@@ -128,26 +128,36 @@ def apply_filters(classes, request):
     return mod
 
 def write_schedules(schedules):
-    with open('schedules.txt', 'w') as f:
-        i = 1
-        if schedules == None or len(schedules) == 0:
-            f.write('No possible schedules!')
-            return
+    i = 1
+    if schedules == None or len(schedules) == 0:
+        return ['No possible schedules!']
 
-        for schedule in schedules:
-            f.write(''.join(['Schedule #', str(i), '\n']))
-            for cl in schedule:
-                l = [cl.section_id]
-                for instructor in cl.instructors:
-                    l.append(instructor)
-                l.append('\n')
-                f.write(' '.join(l))
-                for meeting in cl.meetings:
-                    f.write(' '.join([meeting.days,
-                        meeting.start_time.strftime('%I:%M%p'), '-',
-                        meeting.end_time.strftime('%I:%M%p'), '\n']))
-            i = i + 1
-            f.write('\n')
+    written = list()
+
+    for schedule in schedules:
+        header = ''.join(['<hr>', '<b>Schedule #', str(i), '</b>'])
+        c_list = [header]
+        for cl in schedule:
+            start = [cl.section_id]
+            start.append('<em>')
+            for instructor in cl.instructors:
+                start.append(instructor)
+            start.append('</em>')
+            start.append('<br>')
+            start_text = ' '.join(start)
+
+            m_list = list()
+            for meeting in cl.meetings:
+                m_list.append(' '.join(['<p style=\"text-indent :5em;\" >', meeting.days,
+                    meeting.start_time.strftime('%I:%M%p'), '-',
+                    meeting.end_time.strftime('%I:%M%p'), '</p>']))
+            m_text = ''.join(m_list)
+            c_list.append(''.join([start_text, m_text]))
+
+        written.append('<br>'.join(c_list))
+        i = i + 1
+
+    return written
 
 def make_schedules(classes):
     # No schedules possible if there are no classes
@@ -192,8 +202,13 @@ def convert(sections):
     obj_list = list()
     for section in sections:
         section_obj = Section(section['section_id'], section['instructors'])
+
         for meeting in section['meetings']:
-            section_obj.add_meeting(Meeting(meeting['days'], meeting['start_time'], meeting['end_time']))
+            if meeting['days'] == '':
+                pass
+            else:
+                section_obj.add_meeting(Meeting(meeting['days'], meeting['start_time'], meeting['end_time']))
+
         obj_list.append((section_obj,))
     return obj_list
 
