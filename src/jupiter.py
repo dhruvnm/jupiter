@@ -46,9 +46,79 @@ def get_classes(request):
         class_json.append(class_info)
 
     class_json = apply_filters(class_json, request)
+    class_json = apply_time(class_json, request)
     class_json.sort(key=len)
     schedules = make_schedules(class_json)
     return schedules
+
+def apply_time(classes, request):
+    inc = request.form.getlist('time-inc[]')
+    day = request.form.getlist('time-day[]')
+    top = request.form.getlist('time-top[]')
+    bot = request.form.getlist('time-bot[]')
+
+    to_include = list()
+    d_include = list()
+
+    #split into lists of thinggs to include and not to include
+    for w, x, y, z in zip(inc, day, top, bot):
+        if w == 'include':
+            to_include.append((x, y, z,))
+        else:
+            d_include.append((x, y, z,))
+
+    mod = list()
+    for cl in classes:
+        good_secs = list()
+        #determine which sections abide by the include rules
+        for section in cl:
+            good = True
+            for d, start, end in to_include:
+                for meeting in section['meetings']:
+                    if d in meeting['days']:
+                        met = Meeting(meeting['days'], meeting['start_time'], meeting['end_time'])
+                        if not  met.violates_res(start, end):
+                            good = False
+                            break
+
+                if not good:
+                    break
+
+            if good:
+                good_secs.append(section)
+
+        if len(good_secs) == 0:
+            good_secs = cl
+
+        #remove any sections that should not be included
+        to_remove = list()
+        i = 0
+        for section in good_secs:
+            remove = False
+            for d, start, end in d_include:
+                for meeting in section['meetings']:
+                    if d in meeting['days']:
+                        met = Meeting(meeting['days'], meeting['start_time'], meeting['end_time'])
+                        if met.violates_res(start, end):
+                            remove = True
+                            break
+
+                if remove:
+                    break
+
+            if remove:
+                to_remove.append(i)
+
+            i = i + 1
+
+        to_remove = list(reversed(to_remove))
+        for idx in to_remove:
+            good_secs.pop(idx)
+
+        mod.append(good_secs)
+
+    return mod
+
 
 def apply_filters(classes, request):
     i = 1

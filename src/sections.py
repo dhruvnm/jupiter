@@ -58,3 +58,17 @@ class Meeting:
                 return True
 
         return False
+
+    def violates_res(self, top, bot):
+        t = top.split(':')
+        top = time(int(t[0]), int(t[1]))
+        t = bot.split(':')
+        bot = time(int(t[0]), int(t[1]))
+
+        if ((self.start_time >= top and
+            self.start_time <= bot) and
+            (self.end_time >= top and
+            self.end_time <= bot)):
+            return True
+        else:
+            return False
