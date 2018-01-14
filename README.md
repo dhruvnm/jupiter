@@ -20,3 +20,5 @@ Similarly, the best way to match a specific section is to enter the full four di
 
 ### Filter Order
 Jupiter will process all `include` filter options first. After that, Jupiter will take all of the remaining sections and process them with all `don't include` filter options. In the event that there are no sections remaining after the `include` phase, the `don't include` phase will be carried out on all the sections of that class. 
+
+Additionally, all class options will be processed before time restrictions. 
